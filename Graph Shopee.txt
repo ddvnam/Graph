@@ -1,0 +1,19 @@
+1. Mô tả bài toán
+Điều phối một team shipper hoạt động trên bản đồ lưới, nhận và giao các đơn hàng xuất hiện liên tục tại thời gian và vị trí không biết trước. Mục tiêu là tối đa hóa tổng phần thưởng sau T đơn vị thời gian.
+
+2. Hành động
+Tại mỗi đơn vị thời gian, thực hiện hành động gồm 2 bước theo đúng thứ tự:
+- Di chuyển: Đi lên / xuống / trái / phải một ô, hoặc đứng yên
+- Thao tác: Nhặt duy nhất một đơn hàng có ưu tiên cao nhất tại ô đó, hoặc giao tất cả đơn hàng có địa chỉ đích tại ô đó, hoặc không làm gì
+
+3. Ràng buộc
+- Mỗi đơn hàng có khối lượng riêng. Mỗi shipper chỉ có thể chở một khối lượng tối đa nhất định.
+- Mỗi shipper chỉ được phép chở một số lượng đơn hàng nhất định.
+- Các shipper không thể ra ngoài bản đồ hoặc đi vào ô có vật cản. Tại mỗi đơn vị thời gian, hai shipper không được đứng cùng một ô.
+
+4. Hàm phần thưởng
+- Mỗi đơn hàng có deadline riêng. Giao sớm được thưởng thêm. Giao muộn bị phạt nặng (hệ số nhân giảm đi từ 5 - 10 lần so với giao đúng hạn). Có ba phân loại đơn hàng theo deadline là tiêu chuẩn, nhanh, hỏa tốc. Mỗi loại có hệ số nhân khác nhau cho giao đúng hạn và trễ hạn. Có một số phân loại đơn hàng theo khối lượng, mỗi loại có mức phần thưởng gốc riêng.
+- Có chi phí di chuyển, tỉ lệ với khối lượng shipper đang chở.
+
+5. Cơ chế Surge & Hotspot
+Vào một khoảng thời gian nhất định (surge), phần lớn đơn hàng sẽ được sinh ra xung quanh một hotsopt, cả sugre và hotsopt đều không biết trước.
