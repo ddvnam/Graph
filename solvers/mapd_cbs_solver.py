@@ -66,7 +66,7 @@ class MAPDCBSSolver(Solver):
     def __init__(self, env: DeliveryEnv):
         super().__init__(env)
         self.N = len(self.grid)
-        self.T = int(self.cfg.get("T", 0))
+        self.T = env.T
         self._dist_cache: Dict[Tuple[Position, Position], int] = {}
         self._next_cache: Dict[Tuple[Position, Position], Move] = {}
         self.cbs_horizon = 4 if self.N >= 18 else 5
