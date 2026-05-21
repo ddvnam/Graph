@@ -15,7 +15,6 @@ class Solver:
             raise TypeError("Solver chỉ hỗ trợ khởi tạo dạng Solver(env: DeliveryEnv).")
 
         self.env: DeliveryEnv = env
-        self.cfg = env.public_cfg if hasattr(env, "public_cfg") else env.cfg
         self.grid = env.grid
         self.orders: list[Order] = []
 
@@ -23,12 +22,17 @@ class Solver:
         raise NotImplementedError
 
 
-def default_result(method: str, cfg: dict, orders: Optional[list[Order]] = None) -> dict:
+def default_result(
+    method: str,
+    config_name: str,
+    total_orders: int,
+    orders: Optional[list[Order]] = None,
+) -> dict:
     """Kết quả mặc định cho các solver skeleton chưa cài đặt."""
-    total_orders = int(cfg.get("G", len(orders) if orders is not None else 0))
+    total_orders = int(total_orders if total_orders is not None else (len(orders) if orders is not None else 0))
     return {
         "method": method,
-        "config_name": cfg.get("name", "unknown"),
+        "config_name": config_name,
         "total_orders": total_orders,
         "orders_generated": 0,
         "delivered": 0,
