@@ -34,6 +34,7 @@ SOLVER_SOURCES = [
     ("ACOSolver", "aco_solver.py"),
     ("MAPDCBSSolver", "mapd_cbs_solver.py"),
     ("CustomSolver", "custom_solver.py"),
+    ("Baseline", "baseline.py"),
 ]
 
 
