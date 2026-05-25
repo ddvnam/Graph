@@ -20,6 +20,7 @@ import importlib.util
 import os
 import sys
 import time
+import math
 from typing import Any, Dict, List, Optional, Tuple
 
 import pygame
@@ -80,6 +81,7 @@ SOLVER_SOURCES = [
     ("ACOSolver",        "aco_solver.py"),
     ("MAPDCBSSolver",    "mapd_cbs_solver.py"),
     ("CustomSolver",     "custom_solver.py"),
+    ("Baseline",         "baseline.py"),
 ]
 
 
@@ -119,6 +121,7 @@ class SteppingSolver:
         self.cfg        = copy.deepcopy(cfg)
         self.seed       = seed
         self.solver_cls = solver_cls
+        self.next_actions = {}
         self._build()
 
     def _build(self):
@@ -126,6 +129,14 @@ class SteppingSolver:
         self.solver = self.solver_cls(self.env)
         self.obs    = self.env.reset()
         self.done   = self.obs.get("done", False)
+        self._peek_actions()
+
+    def _peek_actions(self):
+        """Tính toán trước hành động cho bước tiếp theo để phục vụ hiển thị."""
+        if not self.done:
+            self.next_actions = self.solver._decide_actions(self.obs)
+        else:
+            self.next_actions = {}
 
     def reset(self):
         self._build()
@@ -134,9 +145,10 @@ class SteppingSolver:
         """Chạy một bước; trả obs mới."""
         if self.done:
             return self.obs
-        actions  = self.solver._decide_actions(self.obs)
+        actions  = self.next_actions
         self.obs, _, done, _ = self.env.step(actions)
         self.done = done
+        self._peek_actions()
         return self.obs
 
     def result(self) -> dict:
@@ -282,9 +294,40 @@ class Renderer:
                 pygame.draw.rect(self.screen, CARRIED_COLOR, dr, max(2, cell // 10))
 
     # ------------------------------------------------------------------
+    # Draw arrows for shippers direction
+    # ------------------------------------------------------------------
+    def _draw_arrow(self, cx: float, cy: float, radius: float, move: str, color: tuple):
+        vec_map = {"U": (0, -1), "D": (0, 1), "L": (-1, 0), "R": (1, 0)}
+        if move not in vec_map:
+            return
+            
+        dx, dy = vec_map[move]
+        
+        # Điểm bắt đầu từ viền ngoài vòng tròn shipper
+        start_x = cx + dx * radius
+        start_y = cy + dy * radius
+        
+        # Chiều dài mũi tên bằng một nửa kích thước cell
+        arrow_len = self.cell / 2.0
+        end_x = start_x + dx * arrow_len
+        end_y = start_y + dy * arrow_len
+        
+        # Vẽ thân mũi tên
+        pygame.draw.line(self.screen, color, (start_x, start_y), (end_x, end_y), max(2, self.cell // 10))
+        
+        # Vẽ tam giác làm đầu mũi tên
+        head_size = max(3, self.cell // 8)
+        nx, ny = -dy, dx  # Vector pháp tuyến vuông góc với hướng đi
+        
+        p1 = (end_x, end_y)
+        p2 = (end_x - dx * head_size + nx * head_size, end_y - dy * head_size + ny * head_size)
+        p3 = (end_x - dx * head_size - nx * head_size, end_y - dy * head_size - ny * head_size)
+        pygame.draw.polygon(self.screen, color, [p1, p2, p3])
+
+    # ------------------------------------------------------------------
     # Draw shippers
     # ------------------------------------------------------------------
-    def draw_shippers(self, shippers: List[Shipper], orders: Dict[int, Order]):
+    def draw_shippers(self, shippers: List[Shipper], orders: Dict[int, Order], next_actions: dict):
         cell   = self.cell
         radius = max(5, cell // 3)
 
@@ -301,7 +344,6 @@ class Renderer:
             if load_frac > 0:
                 arc_surf = pygame.Surface((outer_r * 2 + 2, outer_r * 2 + 2), pygame.SRCALPHA)
                 arc_rect = pygame.Rect(0, 0, outer_r * 2, outer_r * 2)
-                import math
                 end_angle = -math.pi / 2 + load_frac * 2 * math.pi
                 pygame.draw.arc(
                     arc_surf, (*CARRIED_COLOR, 200), arc_rect,
@@ -325,11 +367,16 @@ class Renderer:
                 cnt = self.font_s.render(str(len(shipper.bag)), True, (255, 255, 255))
                 self.screen.blit(cnt, cnt.get_rect(center=(bx, by)))
 
+            # Vẽ mũi tên biểu diễn hướng di chuyển tiếp theo
+            move = next_actions.get(shipper.id, ("S", 0))[0]
+            if move != "S":
+                self._draw_arrow(cx, cy, radius, move, color)
+
     # ------------------------------------------------------------------
     # Draw side panel
     # ------------------------------------------------------------------
     def draw_panel(self, obs: dict, result_dict: Optional[dict] = None):
-        w, h   = self.screen.get_size()
+        w, h = self.screen.get_size()
         px     = self.grid_offset_x + self.cols * self.cell + PADDING
         panel  = pygame.Rect(px, 0, PANEL_WIDTH, h)
         pygame.draw.rect(self.screen, PANEL_BG, panel)
@@ -477,7 +524,7 @@ class Renderer:
 
             self.draw_grid(grid)
             self.draw_orders(orders, shippers)
-            self.draw_shippers(shippers, orders)
+            self.draw_shippers(shippers, orders, self.stepping.next_actions)
             self.draw_panel(obs)
             self.draw_statusbar(obs)
 
