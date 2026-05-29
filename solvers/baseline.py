@@ -26,7 +26,7 @@ class Baseline(Solver):
     - tìm đường bằng BFS trên grid hiện tại.
     """
 
-    method_name = "GreedyBFS"
+    method_name = "Baseline"
 
     def __init__(self, env: DeliveryEnv):
         super().__init__(env)

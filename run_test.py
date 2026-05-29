@@ -33,8 +33,6 @@ SOLVER_SOURCES = [
     ("VRPOrToolsSolver", "vrp_ortools.py"),
     ("ACOSolver", "aco_solver.py"),
     ("MAPDCBSSolver", "mapd_cbs_solver.py"),
-    ("CustomSolver", "custom_solver.py"),
-    ("Baseline", "baseline.py"),
 ]
 
 
@@ -103,7 +101,6 @@ def main():
     parser = argparse.ArgumentParser(description="Online MAPD graph/RL grader")
     parser.add_argument("--config", required=True, help="Đường dẫn file test_config.txt")
     parser.add_argument("--out", default="results", help="Thư mục lưu kết quả")
-    parser.add_argument("--seed", type=int, default=SEED)
     parser.add_argument("--method", default="all", help="Phương pháp chạy: 'all' để chạy tất cả, hoặc tên phương pháp cụ thể (GreedyBFS, VRPOrToolsSolver, ACOSolver, MAPDCBSSolver)")
     args = parser.parse_args()
 
@@ -136,8 +133,6 @@ def main():
     total_start = time.time()
 
     for cfg in configs:
-        if args.seed is not None:
-            cfg['base_seed'] = args.seed
         name = cfg.get("name", "unknown")
         remaining = MAX_TOTAL_SECONDS - (time.time() - total_start)
         if remaining <= 0:
